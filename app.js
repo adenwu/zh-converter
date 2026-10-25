@@ -12,9 +12,11 @@ const countEl = $('count');
 const RULES_KEY = 'zh-converter-rules';
 const THEME_KEY = 'zh-converter-theme';
 
-// cn = 中國大陸簡體；twp = 台灣正體 + 台灣慣用詞（軟體、網路…）
-const s2t = OpenCC.Converter({ from: 'cn', to: 'twp' });
-const t2s = OpenCC.Converter({ from: 'twp', to: 'cn' });
+// cn = 中國大陸簡體；tw = 台灣正體字形。
+// 只轉字形，不轉用語（软件 → 軟件，不會變成 軟體），因為有些文章需要保留大陸用語。
+// 想要轉成台灣用語，可改成 'twp'。
+const s2t = OpenCC.Converter({ from: 'cn', to: 'tw' });
+const t2s = OpenCC.Converter({ from: 'tw', to: 'cn' });
 
 // ---- 深色 / 淺色模式 ----
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
