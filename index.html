@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>繁簡轉換（台灣用語）</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
+</head>
+<body>
+  <main>
+    <h1>繁簡轉換 <small>台灣用語</small></h1>
+
+    <div class="toolbar">
+      <label><input type="radio" name="dir" value="s2t" checked> 簡體 → 繁體（台灣）</label>
+      <label><input type="radio" name="dir" value="t2s"> 繁體 → 簡體</label>
+      <label class="live"><input type="checkbox" id="live" checked> 即時轉換</label>
+    </div>
+
+    <div class="panes">
+      <section>
+        <div class="pane-head">
+          <span>原文</span>
+          <button id="clear">清除</button>
+        </div>
+        <textarea id="input" placeholder="在這裡貼上文字…"></textarea>
+      </section>
+      <section>
+        <div class="pane-head">
+          <span>結果</span>
+          <button id="copy">複製</button>
+        </div>
+        <textarea id="output" readonly></textarea>
+      </section>
+    </div>
+
+    <div class="actions">
+      <button id="convert" class="primary">轉換</button>
+      <span id="status"></span>
+    </div>
+
+    <details id="custom">
+      <summary>自訂修正詞典（僅套用於 簡 → 繁）</summary>
+      <p class="hint">轉換結果中若有詞被轉錯，在這裡新增「轉出的錯誤詞 → 正確詞」，之後會自動修正。資料存在本機瀏覽器。</p>
+      <form id="add-rule">
+        <input id="rule-from" placeholder="錯誤（例：覆仇）" required>
+        <span>→</span>
+        <input id="rule-to" placeholder="正確（例：復仇）" required>
+        <button type="submit">新增</button>
+      </form>
+      <ul id="rules"></ul>
+    </details>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
