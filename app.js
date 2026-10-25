@@ -1,20 +1,60 @@
 // 繁簡轉換：使用 opencc-js（以詞彙為單位轉換，避免 复仇→覆仇 這類錯誤）
+// 大量文字（15 萬字以上）的效能重點：
+//   - 只用一個文字框，按按鈕才轉換（不在每次輸入時轉換）
+//   - 關閉拼字檢查（spellcheck="false"），否則瀏覽器檢查大段文字會卡住
+//   - 字數統計延遲到停止輸入後才計算
 
 const $ = (id) => document.getElementById(id);
-const input = $('input');
-const output = $('output');
+const box = $('text');
 const status = $('status');
+const countEl = $('count');
 
-const STORAGE_KEY = 'zh-converter-rules';
+const RULES_KEY = 'zh-converter-rules';
+const THEME_KEY = 'zh-converter-theme';
 
 // cn = 中國大陸簡體；twp = 台灣正體 + 台灣慣用詞（軟體、網路…）
 const s2t = OpenCC.Converter({ from: 'cn', to: 'twp' });
 const t2s = OpenCC.Converter({ from: 'twp', to: 'cn' });
 
+// ---- 深色 / 淺色模式 ----
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+function isDark() {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === 'dark' : darkQuery.matches;
+}
+
+function renderThemeButton() {
+  $('theme').textContent = isDark() ? '☀ 淺色模式' : '🌙 深色模式';
+}
+
+$('theme').addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem(THEME_KEY, next); } catch {}
+  renderThemeButton();
+});
+darkQuery.addEventListener('change', renderThemeButton);
+
+// ---- 字數統計 ----
+let countTimer;
+
+function updateCount() {
+  // 不計空白與換行
+  countEl.textContent = box.value.replace(/\s/g, '').length.toLocaleString();
+}
+
+function scheduleCount() {
+  clearTimeout(countTimer);
+  countTimer = setTimeout(updateCount, 200);
+}
+
+box.addEventListener('input', scheduleCount);
+
 // ---- 自訂修正詞典 ----
 function loadRules() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    return JSON.parse(localStorage.getItem(RULES_KEY)) || [];
   } catch {
     return [];
   }
@@ -22,7 +62,7 @@ function loadRules() {
 
 function saveRules(rules) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
+    localStorage.setItem(RULES_KEY, JSON.stringify(rules));
   } catch {
     status.textContent = '無法儲存自訂詞典（瀏覽器封鎖了本機儲存）';
   }
@@ -51,7 +91,6 @@ function renderRules() {
       rules.splice(i, 1);
       saveRules(rules);
       renderRules();
-      convert();
     };
     li.appendChild(del);
     list.appendChild(li);
@@ -69,43 +108,61 @@ $('add-rule').addEventListener('submit', (e) => {
   renderRules();
   $('rule-from').value = '';
   $('rule-to').value = '';
-  convert();
 });
 
 // ---- 轉換 ----
-function direction() {
-  return document.querySelector('input[name="dir"]:checked').value;
+let previous = null; // 給「復原」用：轉換前的文字
+
+function setText(text) {
+  box.value = text;
+  updateCount();
 }
 
-function convert() {
-  const text = input.value;
-  output.value = direction() === 's2t' ? applyRules(s2t(text)) : t2s(text);
-  status.textContent = text ? `共 ${text.length} 字` : '';
+function convert(fn, label) {
+  const text = box.value;
+  if (!text) return;
+  const t0 = performance.now();
+  const result = fn(text);
+  if (result !== text) {
+    previous = text;
+    $('undo').disabled = false;
+    setText(result);
+  }
+  const ms = Math.round(performance.now() - t0);
+  status.textContent = `已${label}（${ms} ms）`;
 }
 
-$('convert').addEventListener('click', convert);
-input.addEventListener('input', () => {
-  if ($('live').checked) convert();
+$('to-trad').addEventListener('click', () => convert((t) => applyRules(s2t(t)), '轉換為繁體'));
+$('to-simp').addEventListener('click', () => convert(t2s, '轉換為簡體'));
+
+$('undo').addEventListener('click', () => {
+  if (previous === null) return;
+  setText(previous);
+  previous = null;
+  $('undo').disabled = true;
+  status.textContent = '已復原';
 });
-document.querySelectorAll('input[name="dir"]').forEach((r) =>
-  r.addEventListener('change', convert)
-);
 
 $('clear').addEventListener('click', () => {
-  input.value = '';
-  output.value = '';
+  if (box.value) {
+    previous = box.value; // 清除也可以復原，避免誤按
+    $('undo').disabled = false;
+  }
+  setText('');
   status.textContent = '';
-  input.focus();
+  box.focus();
 });
 
 $('copy').addEventListener('click', async () => {
   try {
-    await navigator.clipboard.writeText(output.value);
+    await navigator.clipboard.writeText(box.value);
   } catch {
-    output.select();
+    box.select();
     document.execCommand('copy');
   }
   status.textContent = '已複製到剪貼簿';
 });
 
+renderThemeButton();
 renderRules();
+updateCount();

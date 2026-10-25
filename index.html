@@ -4,43 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>繁簡轉換（台灣用語）</title>
+  <script>
+    // 在畫面出現前套用主題，避免閃一下白底
+    try {
+      const t = localStorage.getItem('zh-converter-theme');
+      if (t) document.documentElement.dataset.theme = t;
+    } catch {}
+  </script>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
 </head>
 <body>
   <main>
-    <h1>繁簡轉換 <small>台灣用語</small></h1>
+    <header>
+      <h1>繁簡轉換 <small>台灣用語</small></h1>
+      <button id="theme" class="ghost" title="切換深色 / 淺色模式"></button>
+    </header>
 
-    <div class="toolbar">
-      <label><input type="radio" name="dir" value="s2t" checked> 簡體 → 繁體（台灣）</label>
-      <label><input type="radio" name="dir" value="t2s"> 繁體 → 簡體</label>
-      <label class="live"><input type="checkbox" id="live" checked> 即時轉換</label>
-    </div>
+    <div class="card">
+      <div class="buttons">
+        <button id="to-trad">轉換為繁體</button>
+        <button id="to-simp">轉換為簡體</button>
+      </div>
 
-    <div class="panes">
-      <section>
-        <div class="pane-head">
-          <span>原文</span>
-          <button id="clear">清除</button>
-        </div>
-        <textarea id="input" placeholder="在這裡貼上文字…"></textarea>
-      </section>
-      <section>
-        <div class="pane-head">
-          <span>結果</span>
-          <button id="copy">複製</button>
-        </div>
-        <textarea id="output" readonly></textarea>
-      </section>
-    </div>
+      <textarea id="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+        placeholder="在這裡貼上文字，再按「轉換為繁體」或「轉換為簡體」…"></textarea>
 
-    <div class="actions">
-      <button id="convert" class="primary">轉換</button>
-      <span id="status"></span>
+      <div class="buttons">
+        <button id="clear">清除</button>
+        <button id="undo" disabled>復原</button>
+        <button id="copy">複製</button>
+        <span id="status"></span>
+      </div>
+
+      <p class="count"><span class="hint">Ctrl+A or Ctrl+V</span> 總共有：<b id="count">0</b> 字</p>
     </div>
 
     <details id="custom">
-      <summary>自訂修正詞典（僅套用於 簡 → 繁）</summary>
+      <summary>自訂修正詞典（僅套用於 轉換為繁體）</summary>
       <p class="hint">轉換結果中若有詞被轉錯，在這裡新增「轉出的錯誤詞 → 正確詞」，之後會自動修正。資料存在本機瀏覽器。</p>
       <form id="add-rule">
         <input id="rule-from" placeholder="錯誤（例：覆仇）" required>
