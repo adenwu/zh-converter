@@ -100,6 +100,32 @@ function renderRules() {
   list.scrollTop = 0;
 }
 
+// 方向鍵切換兩個輸入框：游標在「錯誤」框的最後按 →，跳到「正確」框；
+// 游標在「正確」框的最前面按 ←，跳回「錯誤」框。
+function jumpTo(target) {
+  target.focus();
+  const end = target.value.length;
+  target.setSelectionRange(end, end);
+}
+
+$('rule-from').addEventListener('keydown', (e) => {
+  const el = e.target;
+  if (e.isComposing || e.key !== 'ArrowRight') return; // 注音 / 拼音選字中不攔截
+  if (el.selectionStart === el.value.length && el.selectionEnd === el.value.length) {
+    e.preventDefault();
+    jumpTo($('rule-to'));
+  }
+});
+
+$('rule-to').addEventListener('keydown', (e) => {
+  const el = e.target;
+  if (e.isComposing || e.key !== 'ArrowLeft') return;
+  if (el.selectionStart === 0 && el.selectionEnd === 0) {
+    e.preventDefault();
+    jumpTo($('rule-from'));
+  }
+});
+
 $('add-rule').addEventListener('submit', (e) => {
   e.preventDefault();
   const from = $('rule-from').value.trim();
