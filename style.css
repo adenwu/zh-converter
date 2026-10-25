@@ -154,11 +154,19 @@ summary { cursor: pointer; font-weight: bold; }
 }
 #add-rule button, #rules button { padding: 3px 12px; font-size: 0.9rem; border-width: 2px; }
 
-#rules { padding-left: 0; list-style: none; }
+/* 最多顯示 7 行，超過時只在框內捲動 */
+#rules {
+  --row: 46px;
+  padding: 0 8px 0 0;
+  list-style: none;
+  max-height: calc(var(--row) * 7);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 #rules li {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 4px 0;
+  height: var(--row);
   border-bottom: 1px dashed var(--card-border);
 }

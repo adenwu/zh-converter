@@ -82,7 +82,9 @@ function applyRules(text) {
 function renderRules() {
   const list = $('rules');
   list.innerHTML = '';
-  rules.forEach(([from, to], i) => {
+  // 新的在上面：rules 依新增順序存放，倒著顯示
+  for (let i = rules.length - 1; i >= 0; i--) {
+    const [from, to] = rules[i];
     const li = document.createElement('li');
     li.textContent = `${from} → ${to}`;
     const del = document.createElement('button');
@@ -94,7 +96,8 @@ function renderRules() {
     };
     li.appendChild(del);
     list.appendChild(li);
-  });
+  }
+  list.scrollTop = 0;
 }
 
 $('add-rule').addEventListener('submit', (e) => {
