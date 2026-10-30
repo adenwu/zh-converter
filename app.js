@@ -141,6 +141,56 @@ $('add-rule').addEventListener('submit', (e) => {
   $('rule-to').value = '';
 });
 
+// ---- 詞典匯出 / 匯入（換電腦時用） ----
+const rulesStatus = $('rules-status');
+
+$('export-rules').addEventListener('click', () => {
+  if (!rules.length) {
+    rulesStatus.textContent = '詞典是空的，沒有東西可以匯出';
+    return;
+  }
+  const data = { app: 'zh-converter', version: 1, rules };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `繁簡轉換詞典-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  rulesStatus.textContent = `已匯出 ${rules.length} 筆`;
+});
+
+$('import-rules').addEventListener('click', () => $('import-file').click());
+
+$('import-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = ''; // 讓同一個檔案可以再選一次
+  if (!file) return;
+  let imported;
+  try {
+    const data = JSON.parse(await file.text());
+    // 也接受直接是 [["錯","對"], ...] 的陣列
+    imported = (Array.isArray(data) ? data : data.rules).filter(
+      (r) => Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string' && r[0].trim() && r[1].trim()
+    );
+  } catch {
+    rulesStatus.textContent = '匯入失敗：不是有效的詞典檔';
+    return;
+  }
+  // 合併：同一個錯誤詞以匯入的為準，現有但檔案裡沒有的規則保留
+  let added = 0;
+  let updated = 0;
+  for (const [from, to] of imported.map(([f, t]) => [f.trim(), t.trim()])) {
+    const old = rules.find(([f]) => f === from);
+    if (old && old[1] === to) continue;
+    if (old) updated++; else added++;
+    rules = rules.filter(([f]) => f !== from);
+    rules.push([from, to]);
+  }
+  saveRules(rules);
+  renderRules();
+  rulesStatus.textContent = `已匯入：新增 ${added} 筆、更新 ${updated} 筆，目前共 ${rules.length} 筆`;
+});
+
 // ---- 轉換 ----
 let previous = null; // 給「復原」用：轉換前的文字
 

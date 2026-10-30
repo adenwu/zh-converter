@@ -152,7 +152,9 @@ summary { cursor: pointer; font-weight: bold; }
   color: var(--area-text);
   font-family: inherit;
 }
-#add-rule button, #rules button { padding: 3px 12px; font-size: 0.9rem; border-width: 2px; }
+.rules-io { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+#add-rule button, #rules button, .rules-io button { padding: 3px 12px; font-size: 0.9rem; border-width: 2px; }
 
 /* 最多顯示 7 行，超過時只在框內捲動 */
 #rules {
